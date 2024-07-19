@@ -12,6 +12,7 @@ fn generate_notes_freqs_data() -> (
     HashMap<&'static str, NoteOct>,
     HashMap<NoteName, Vec<f64>>,
     HashMap<NoteOct, usize>,
+    HashMap<usize, NoteOct>,
 ) {
     let mut note_freqs = HashMap::<NoteOct, f64>::new();
     let mut freq_notes = HashMap::<&'static str, NoteOct>::new();
@@ -30,6 +31,7 @@ fn generate_notes_freqs_data() -> (
         (NoteName::GSharpAFlat, vec![]),
     ]);
     let mut note_weights = HashMap::<NoteOct, usize>::new();
+    let mut weight_notes = HashMap::<usize, NoteOct>::new();
     let mut weight = 0;
 
     for line in NOTE_DATA.lines() {
@@ -67,14 +69,23 @@ fn generate_notes_freqs_data() -> (
                 // add `freq` (str)'s `NoteOct` value to collection
                 freq_notes.insert(freq_str, note_oct);
 
-                // add `NoteOct` weight value and increment for next line value (`C1 = 0, C#/Db1 = 1, D1 = 2...`)
+                // add `NoteOct` weight value  (`C1 = 0, C#/Db1 = 1, D1 = 2...`)
                 note_weights.insert(note_oct, weight);
+                // add weight value's `NoteOct`
+                weight_notes.insert(weight, note_oct);
+                // increment `weight` for next input line's value
                 weight += 1;
             }
         }
     }
 
-    (note_freqs, freq_notes, note_freq_collections, note_weights)
+    (
+        note_freqs,
+        freq_notes,
+        note_freq_collections,
+        note_weights,
+        weight_notes,
+    )
 }
 
 // === ENHARMONICS === //
@@ -149,10 +160,12 @@ pub fn generate_music_data() -> (
     HashMap<&'static str, NoteOct>,
     HashMap<NoteName, Vec<f64>>,
     HashMap<NoteOct, usize>,
+    HashMap<usize, NoteOct>,
     HashMap<ChordName, Vec<NoteName>>,
     HashMap<NoteName, NoteName>,
 ) {
-    let (note_freqs, freq_notes, note_freq_collections, note_weights) = generate_notes_freqs_data();
+    let (note_freqs, freq_notes, note_freq_collections, note_weights, weight_notes) =
+        generate_notes_freqs_data();
     let chord_spellings = generate_chord_spellings();
     let enharmonics = generate_enharmonics();
 
@@ -161,6 +174,7 @@ pub fn generate_music_data() -> (
         freq_notes,
         note_freq_collections,
         note_weights,
+        weight_notes,
         chord_spellings,
         enharmonics,
     )

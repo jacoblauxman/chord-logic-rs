@@ -41,10 +41,17 @@ fn main() {
     println!("\nC#/Db4 frequency: {}\n", c_sharp4_freq);
 
     // note weight lookup
-    let c_sharp4_weight = MusicTheoryBaux.get_weight(&NoteOct::CSharpDFlat4).unwrap();
+    let c_sharp4_weight = MusicTheoryBaux
+        .get_note_weight(&NoteOct::CSharpDFlat4)
+        .unwrap();
     println!("C#/Db4 `weight`: {}\n", c_sharp4_weight);
 
+    let c_sharp4 = MusicTheoryBaux.get_weight_note(c_sharp4_weight).unwrap();
+    println!("`weight` {} equivalent: {}\n", c_sharp4_weight, c_sharp4);
+
     // === CHORD STRUCT === //
+
+    // default example
     let c_chord = Chord::default();
-    println!("DEFAULT C CHORD?: \n{:?}", c_chord);
+    println!("DEFAULT C CHORD?: \n{:?}\n", c_chord);
 }

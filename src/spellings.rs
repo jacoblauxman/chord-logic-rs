@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, thiserror::Error)]
-#[error("Error trying in conversion of chord name `{0}` to `ChordName` enum variant")]
+#[error("Error trying in conversion of `&str` chord name `{0}` to `ChordName` enum variant \n(Note: all chords spelled with capitalized `name` letter + various common quality symbols and no spaces [ex: `C`, `C#°` or `C#/Dbdim`, `Db+`, etc.]")]
 pub struct ChordNameError(String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -156,6 +156,7 @@ impl TryFrom<&str> for ChordName {
     }
 }
 
+// consider display to show "[NoteName] [Quality - fully spelled]" re: "free" `toString` implementation and later 'translating' to `Chord` type struct
 impl Display for ChordName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -8,6 +8,7 @@ pub struct MusicTheoryBaux {
     freq_notes: HashMap<&'static str, NoteOct>,
     note_freq_collections: HashMap<NoteName, Vec<f64>>,
     note_weights: HashMap<NoteOct, usize>,
+    weight_notes: HashMap<usize, NoteOct>,
     chord_spellings: HashMap<ChordName, Vec<NoteName>>,
     enharmonics: HashMap<NoteName, NoteName>,
 }
@@ -19,6 +20,7 @@ impl MusicTheoryBaux {
             freq_notes,
             note_freq_collections,
             note_weights,
+            weight_notes,
             chord_spellings,
             enharmonics,
         ) = generate_music_data();
@@ -28,6 +30,7 @@ impl MusicTheoryBaux {
             freq_notes,
             note_freq_collections,
             note_weights,
+            weight_notes,
             chord_spellings,
             enharmonics,
         }
@@ -48,6 +51,10 @@ impl MusicTheoryBaux {
 
     pub fn note_weights(&self) -> &HashMap<NoteOct, usize> {
         &self.note_weights
+    }
+
+    pub fn weight_notes(&self) -> &HashMap<usize, NoteOct> {
+        &self.weight_notes
     }
 
     pub fn chord_spellings(&self) -> &HashMap<ChordName, Vec<NoteName>> {
@@ -80,8 +87,12 @@ impl MusicTheoryBaux {
             .map(|(_, v)| v)
     }
 
-    pub fn get_weight(&self, note: &NoteOct) -> Option<&usize> {
+    pub fn get_note_weight(&self, note: &NoteOct) -> Option<&usize> {
         self.note_weights.get(note)
+    }
+
+    pub fn get_weight_note(&self, weight: &usize) -> Option<&NoteOct> {
+        self.weight_notes.get(weight)
     }
 
     pub fn get_chord_spelling(&self, chord: &ChordName) -> Option<&Vec<NoteName>> {
@@ -95,7 +106,3 @@ impl MusicTheoryBaux {
 
 #[allow(non_upper_case_globals)]
 pub static MusicTheoryBaux: Lazy<MusicTheoryBaux> = Lazy::new(MusicTheoryBaux::new);
-
-//
-//
-//

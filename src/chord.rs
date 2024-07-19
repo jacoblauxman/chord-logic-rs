@@ -12,6 +12,7 @@ pub enum ChordQuality {
     Dim,
 }
 
+// may want to adjust to `write` chord symbols instead (maj, min, +, °)
 impl Display for ChordQuality {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -40,6 +41,14 @@ pub struct ChordToneTransition(NoteOct, NoteOct);
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
+pub struct VoiceTransitions {
+    root: ChordToneTransition,
+    second: Option<ChordToneTransition>,
+    third: Option<ChordToneTransition>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct Chord {
     name: ChordName,
     root: NoteName,
@@ -48,13 +57,17 @@ pub struct Chord {
     frequencies: Vec<f64>,
     tones: ChordTones,
     voice_transitions: Option<Vec<ChordToneTransition>>,
+    weights: (usize, usize, usize),
 }
 
 impl Chord {
+    // creates basic Cmaj instance (C3, E3, G3)
     pub fn default() -> Self {
-        let root_f = MusicTheoryBaux.get_freq(&NoteOct::C3).unwrap();
-        let third_f = MusicTheoryBaux.get_freq(&NoteOct::E3).unwrap();
-        let fifth_f = MusicTheoryBaux.get_freq(&NoteOct::G3).unwrap();
+        let (root, third, fifth) = (NoteOct::C3, NoteOct::E3, NoteOct::G3);
+
+        let root_f = MusicTheoryBaux.get_freq(&root).unwrap();
+        let third_f = MusicTheoryBaux.get_freq(&third).unwrap();
+        let fifth_f = MusicTheoryBaux.get_freq(&fifth).unwrap();
 
         let tones = ChordTones {
             root: NoteOct::C3,
@@ -65,6 +78,10 @@ impl Chord {
             seventh: None,
         };
 
+        let root_w = MusicTheoryBaux.get_note_weight(&root).unwrap();
+        let third_w = MusicTheoryBaux.get_note_weight(&third).unwrap();
+        let fifth_w = MusicTheoryBaux.get_note_weight(&fifth).unwrap();
+
         Self {
             name: ChordName::Cmaj,
             root: NoteName::C,
@@ -73,6 +90,17 @@ impl Chord {
             frequencies: Vec::from([*root_f, *third_f, *fifth_f]),
             tones,
             voice_transitions: None,
+            weights: (*root_w, *third_w, *fifth_w),
         }
+    }
+
+    pub fn new(name: &str) -> Self {
+        let chord_name = ChordName::try_from(name).unwrap();
+        let _spelling = MusicTheoryBaux.get_chord_spelling(&chord_name).unwrap();
+        todo!()
+    }
+
+    pub fn from_chord(_prev_chord: &Chord) -> Self {
+        todo!()
     }
 }
