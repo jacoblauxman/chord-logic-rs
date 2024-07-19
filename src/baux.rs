@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 
-use crate::{data_sets::generate_music_data, ChordName, NoteName, NoteOct};
+use crate::{generate_music_data, ChordName, ChordSpelling, NoteName, NoteOct};
 use std::collections::HashMap;
 
 pub struct MusicTheoryBaux {
@@ -9,7 +9,7 @@ pub struct MusicTheoryBaux {
     note_freq_collections: HashMap<NoteName, Vec<f64>>,
     note_weights: HashMap<NoteOct, usize>,
     weight_notes: HashMap<usize, NoteOct>,
-    chord_spellings: HashMap<ChordName, Vec<NoteName>>,
+    chord_spellings: HashMap<ChordName, ChordSpelling>,
     enharmonics: HashMap<NoteName, NoteName>,
 }
 
@@ -57,7 +57,7 @@ impl MusicTheoryBaux {
         &self.weight_notes
     }
 
-    pub fn chord_spellings(&self) -> &HashMap<ChordName, Vec<NoteName>> {
+    pub fn chord_spellings(&self) -> &HashMap<ChordName, ChordSpelling> {
         &self.chord_spellings
     }
 
@@ -95,7 +95,7 @@ impl MusicTheoryBaux {
         self.weight_notes.get(weight)
     }
 
-    pub fn get_chord_spelling(&self, chord: &ChordName) -> Option<&Vec<NoteName>> {
+    pub fn get_chord_spelling(&self, chord: &ChordName) -> Option<&ChordSpelling> {
         self.chord_spellings.get(chord)
     }
 

@@ -1,4 +1,4 @@
-use crate::{ChordName, NoteName, NoteOct};
+use crate::{ChordName, ChordSpelling, NoteName, NoteOct};
 use std::collections::HashMap;
 
 static NOTE_DATA: &str = include_str!(".././note_frequencies.txt");
@@ -6,7 +6,7 @@ static CHORD_DATA: &str = include_str!(".././chord_spellings.txt");
 
 // === NOTES/FREQUENCIES || NOTE WEIGHTS === //
 
-// `note_freqs`, `freq_notes`, `note_freq_collections`, and `note_weights` fields for `MusicBaux`
+// `note_freqs`, `freq_notes`, `note_freq_collections`, and `note_weights` fields for `MusicTheoryBaux`
 fn generate_notes_freqs_data() -> (
     HashMap<NoteOct, f64>,
     HashMap<&'static str, NoteOct>,
@@ -90,7 +90,6 @@ fn generate_notes_freqs_data() -> (
 
 // === ENHARMONICS === //
 
-// `MusicBaux` `enharmonics` field
 fn generate_enharmonics() -> HashMap<NoteName, NoteName> {
     [
         ("C#", "Db"),
@@ -125,8 +124,8 @@ fn generate_enharmonics() -> HashMap<NoteName, NoteName> {
 
 // === CHORD SPELLINGS === //
 
-fn generate_chord_spellings() -> HashMap<ChordName, Vec<NoteName>> {
-    let mut spellings: HashMap<ChordName, Vec<NoteName>> = HashMap::new();
+fn generate_chord_spellings() -> HashMap<ChordName, ChordSpelling> {
+    let mut chord_spellings: HashMap<ChordName, ChordSpelling> = HashMap::new();
 
     for line in CHORD_DATA.lines() {
         if let Some((name, notes_str)) = line.split_once(": ") {
@@ -138,15 +137,24 @@ fn generate_chord_spellings() -> HashMap<ChordName, Vec<NoteName>> {
                 .split(", ")
                 .collect();
 
+            println!("current name: {:?}", name);
+            println!("current notes vec: {:?}", notes);
+
             let typed_name: ChordName = name.try_into().unwrap();
             let typed_notes: Vec<NoteName> =
                 notes.iter().map(|n| n.trim().try_into().unwrap()).collect();
 
-            spellings.insert(typed_name, typed_notes);
+            let chord_spelling = ChordSpelling::new(
+                &typed_name.get_root(),
+                &typed_name.get_quality(),
+                &typed_notes,
+            );
+
+            chord_spellings.insert(typed_name, chord_spelling);
         }
     }
 
-    spellings
+    chord_spellings
 }
 
 //
@@ -161,7 +169,7 @@ pub fn generate_music_data() -> (
     HashMap<NoteName, Vec<f64>>,
     HashMap<NoteOct, usize>,
     HashMap<usize, NoteOct>,
-    HashMap<ChordName, Vec<NoteName>>,
+    HashMap<ChordName, ChordSpelling>,
     HashMap<NoteName, NoteName>,
 ) {
     let (note_freqs, freq_notes, note_freq_collections, note_weights, weight_notes) =
