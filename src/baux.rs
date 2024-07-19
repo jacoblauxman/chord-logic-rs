@@ -105,4 +105,4 @@ impl MusicTheoryBaux {
 }
 
 #[allow(non_upper_case_globals)]
-pub static MusicTheoryBaux: Lazy<MusicTheoryBaux> = Lazy::new(MusicTheoryBaux::new);
+pub static music_theory_baux: Lazy<MusicTheoryBaux> = Lazy::new(MusicTheoryBaux::new);

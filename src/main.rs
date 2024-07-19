@@ -1,64 +1,56 @@
-use music_baux::{ChordName, ChordQuality, MusicTheoryBaux, NoteName, NoteOct};
+#[allow(unused_imports)]
+use music_baux::{music_theory_baux, ChordName, ChordQuality, NoteName, NoteOct};
 
 fn main() {
     //
     // various methods / data return examples (read only)
     //
 
-    //
-    //
-    // all data collections (via named `MusicTheoryBaux` fields)
-    // println!("{:?}", MusicTheoryBaux.note_freqs());
-    // println!("{:?}", MusicTheoryBaux.freq_notes());
-    // println!("{:?}", MusicTheoryBaux.note_freq_collections());
-    // println!("{:?}", MusicTheoryBaux.chord_spellings());
+    // -- all data collections (via named `music_theory_baux` fields) -- //
+    // println!("{:?}", music_theory_baux.note_freqs());
+    // println!("{:?}", music_theory_baux.freq_notes());
+    // println!("{:?}", music_theory_baux.note_freq_collections());
+    println!("{:?}", music_theory_baux.chord_spellings());
 
-    // for (_, spelling) in MusicTheoryBaux.chord_spellings() {
+    // for (_, spelling) in music_theory_baux.chord_spellings() {
     //     println!("{}", spelling);
     // }
-    // println!("{:?}", MusicTheoryBaux.enharmonics());
+    // println!("{:?}", music_theory_baux.enharmonics());
     //
     //
 
+    // -- specific data -- //
     // // chord spelling
-    let b_maj = MusicTheoryBaux
+    let b_maj = music_theory_baux
         .get_chord_spelling(&ChordName::B(ChordQuality::Maj))
         .unwrap();
     println!("\nB Major is: {:?}\n", b_maj);
 
-    // note frequency collection
-    let all_bs = MusicTheoryBaux
-        .get_note_freq_collection(&NoteName::B)
-        .unwrap();
-    println!("All B frequencies: {:?}\nFREQ CHECK:\n", all_bs);
+    // // note frequency collection
+    // let all_bs = music_theory_baux
+    //     .get_note_freq_collection(&NoteName::B)
+    //     .unwrap();
+    // println!("All B frequencies: {:?}\nFREQ CHECK:\n", all_bs);
 
-    // frequency to note lookup
-    all_bs.iter().for_each(|freq| {
-        let note_oct = MusicTheoryBaux.get_note(*freq);
+    // // frequency to note lookup
+    // all_bs.iter().for_each(|freq| {
+    //     let note_oct = music_theory_baux.get_note(*freq);
 
-        println!("{} is {}", freq, note_oct.unwrap());
-    });
+    //     println!("{} is {}", freq, note_oct.unwrap());
+    // });
 
-    // note to frequency lookup
-    let c_sharp4_freq = MusicTheoryBaux.get_freq(&NoteOct::CSharpDFlat(4)).unwrap();
-    println!("\nC#/Db4 frequency: {}\n", c_sharp4_freq);
+    // // note to frequency lookup
+    // let c_sharp4_freq = music_theory_baux
+    //     .get_freq(&NoteOct::CSharpDFlat(4))
+    //     .unwrap();
+    // println!("\nC#/Db4 frequency: {}\n", c_sharp4_freq);
 
-    // note weight lookup
-    let c_sharp4_weight = MusicTheoryBaux
-        .get_note_weight(&NoteOct::CSharpDFlat(4))
-        .unwrap();
-    println!("C#/Db4 `weight`: {}\n", c_sharp4_weight);
+    // // note weight lookup
+    // let c_sharp4_weight = music_theory_baux
+    //     .get_note_weight(&NoteOct::CSharpDFlat(4))
+    //     .unwrap();
+    // println!("C#/Db4 `weight`: {}\n", c_sharp4_weight);
 
-    let c_sharp4 = MusicTheoryBaux.get_weight_note(c_sharp4_weight).unwrap();
-    println!("`weight` {} equivalent: {}\n", c_sharp4_weight, c_sharp4);
-
-    // // === CHORD STRUCT === //
-
-    // // default example
-    // let c_chord = Chord::default();
-    // println!("DEFAULT C CHORD?: \n{:?}\n", c_chord);
-
-    // OTHER STUFF -- TESTING!
-    // let c_7sus4 = ChordName::C(music_baux::ChordQuality::SevSus4);
-    // println!("It can stringify? {c_7sus4}");
+    // let c_sharp4 = music_theory_baux.get_weight_note(c_sharp4_weight).unwrap();
+    // println!("`weight` {} equivalent: {}\n", c_sharp4_weight, c_sharp4);
 }

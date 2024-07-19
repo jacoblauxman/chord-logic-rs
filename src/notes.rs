@@ -81,6 +81,25 @@ pub enum NoteOct {
     B(usize),
 }
 
+impl NoteOct {
+    pub fn from_note(note_name: &NoteName, oct: usize) -> Self {
+        match note_name {
+            NoteName::C => NoteOct::C(oct),
+            NoteName::CSharpDFlat => NoteOct::CSharpDFlat(oct),
+            NoteName::D => NoteOct::D(oct),
+            NoteName::DSharpEFlat => NoteOct::DSharpEFlat(oct),
+            NoteName::E => NoteOct::E(oct),
+            NoteName::F => NoteOct::F(oct),
+            NoteName::FSharpGFlat => NoteOct::FSharpGFlat(oct),
+            NoteName::G => NoteOct::G(oct),
+            NoteName::GSharpAFlat => NoteOct::GSharpAFlat(oct),
+            NoteName::A => NoteOct::A(oct),
+            NoteName::ASharpBFlat => NoteOct::ASharpBFlat(oct),
+            NoteName::B => NoteOct::B(oct),
+        }
+    }
+}
+
 impl Display for NoteOct {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

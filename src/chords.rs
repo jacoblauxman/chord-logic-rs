@@ -362,6 +362,40 @@ pub enum ChordTone {
     Seventh(NoteName),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ChordToneDegree {
+    Root,
+    Second,
+    Third,
+    Fourth,
+    Fifth,
+    Seventh,
+}
+
+impl ChordTone {
+    pub fn note(&self) -> &NoteName {
+        match self {
+            ChordTone::Root(note) => note,
+            ChordTone::Second(note) => note,
+            ChordTone::Third(note) => note,
+            ChordTone::Fourth(note) => note,
+            ChordTone::Fifth(note) => note,
+            ChordTone::Seventh(note) => note,
+        }
+    }
+
+    pub fn get_tone_degree(&self) -> ChordToneDegree {
+        match self {
+            ChordTone::Root(_) => ChordToneDegree::Root,
+            ChordTone::Second(_) => ChordToneDegree::Second,
+            ChordTone::Third(_) => ChordToneDegree::Third,
+            ChordTone::Fourth(_) => ChordToneDegree::Fourth,
+            ChordTone::Fifth(_) => ChordToneDegree::Fifth,
+            ChordTone::Seventh(_) => ChordToneDegree::Seventh,
+        }
+    }
+}
+
 impl Display for ChordTone {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
