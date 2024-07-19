@@ -1,4 +1,4 @@
-use music_baux::{ChordName, MusicTheoryBaux, NoteName, NoteOct};
+use music_baux::{Chord, ChordName, MusicTheoryBaux, NoteName, NoteOct};
 
 fn main() {
     //
@@ -43,4 +43,8 @@ fn main() {
     // note weight lookup
     let c_sharp4_weight = MusicTheoryBaux.get_weight(&NoteOct::CSharpDFlat4).unwrap();
     println!("C#/Db4 `weight`: {}\n", c_sharp4_weight);
+
+    // === CHORD STRUCT === //
+    let c_chord = Chord::default();
+    println!("DEFAULT C CHORD?: \n{:?}", c_chord);
 }
