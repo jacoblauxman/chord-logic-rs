@@ -1,6 +1,26 @@
-use crate::{music_theory_baux, ChordName, ChordQuality, ChordTone, ChordToneDegree, NoteOct};
-use std::collections::HashMap;
+use crate::{
+    music_theory_baux, ChordName, ChordQuality, ChordSpelling, ChordTone, ChordToneDegree, NoteOct,
+};
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
+
+#[derive(Debug, Clone)]
+pub struct VoiceLeadingChoice {
+    diff: usize,
+    voice: ChordVoice,
+}
+
+#[derive(Debug, Clone)]
+pub struct BestChoices {
+    lo: (VoiceLeadingChoice, VoiceLeadingChoice),
+    hi: (VoiceLeadingChoice, VoiceLeadingChoice),
+}
+
+#[derive(Debug, Clone)]
+pub struct VoiceLeadingConfig {
+    voices: Vec<ChordVoice>,
+    diff: usize,
+}
 
 #[allow(dead_code)]
 #[derive(Debug, thiserror::Error)]
@@ -34,6 +54,17 @@ impl ChordVoice {
             ChordToneDegree::Seventh => ChordVoice::Seventh(*note),
         }
     }
+
+    pub fn note_oct(&self) -> &NoteOct {
+        match self {
+            ChordVoice::Root(note) => note,
+            ChordVoice::Second(note) => note,
+            ChordVoice::Third(note) => note,
+            ChordVoice::Fourth(note) => note,
+            ChordVoice::Fifth(note) => note,
+            ChordVoice::Seventh(note) => note,
+        }
+    }
 }
 
 impl Display for ChordVoice {
@@ -52,39 +83,15 @@ impl Display for ChordVoice {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChordVoicing {
     chord_name: ChordName,
-    note_weights: Vec<usize>,
     root: NoteOct,
-    transitions: Option<HashMap<ChordVoice, ChordVoice>>,
-    frequencies: Vec<f64>,
     voices: (ChordVoice, ChordVoice, ChordVoice),
+    frequencies: Vec<f64>,
+    note_weights: Vec<usize>,
+    transitions: Option<HashMap<ChordVoice, ChordVoice>>,
 }
 
 #[allow(dead_code)]
 impl ChordVoicing {
-    pub fn default() -> Self {
-        let voices = [NoteOct::C(3), NoteOct::E(3), NoteOct::G(3)];
-        let [root, third, fifth] = voices;
-        let mut note_weights = Vec::with_capacity(3);
-        let mut frequencies: Vec<f64> = Vec::with_capacity(3);
-        for voice in voices {
-            frequencies.push(*music_theory_baux.get_freq(&voice).unwrap());
-            note_weights.push(*music_theory_baux.get_note_weight(&voice).unwrap());
-        }
-
-        ChordVoicing {
-            chord_name: ChordName::C(ChordQuality::Maj),
-            root,
-            voices: (
-                ChordVoice::Root(root),
-                ChordVoice::Third(third),
-                ChordVoice::Fifth(fifth),
-            ),
-            note_weights,
-            transitions: None,
-            frequencies,
-        }
-    }
-
     pub fn chord_name(&self) -> ChordName {
         self.chord_name
     }
@@ -105,15 +112,243 @@ impl ChordVoicing {
         self.root
     }
 
+    pub fn voices(&self) -> &(ChordVoice, ChordVoice, ChordVoice) {
+        &self.voices
+    }
+
     pub fn get_transitions(&self) -> &Option<HashMap<ChordVoice, ChordVoice>> {
         &self.transitions
     }
 
-    pub fn to_voicing(&self, next_chord: &ChordName) -> ChordVoicing {
-        // logic here for comparing current chord note weights to (all) possible note weights from `next_chord` weights lookup
-        todo!()
+    pub fn voice_lead(&self, new_chord: &ChordName) -> ChordVoicing {
+        let new_spelling = music_theory_baux.get_chord_spelling(new_chord).unwrap();
+        let new_voice_choices = self.get_new_voice_choices(new_spelling);
+
+        let best_choices = self.calculate_best_choices(&new_voice_choices);
+        let configurations = self.generate_leads(&best_choices);
+
+        let valid_configs: Vec<_> = configurations
+            .into_iter()
+            .filter(|config| !self.has_duplicate_note(config))
+            .collect();
+
+        let mut sorted_configs = valid_configs;
+        sorted_configs.sort_by_key(|config| config.diff);
+
+        self.create_new_voicing(new_chord, &sorted_configs[0].voices)
+    }
+
+    fn calculate_diff(&self, old_val: &ChordVoice, new_val: &ChordVoice) -> usize {
+        let old_weight = music_theory_baux
+            .get_note_weight(old_val.note_oct())
+            .unwrap();
+        let new_weight = music_theory_baux
+            .get_note_weight(new_val.note_oct())
+            .unwrap();
+        old_weight.abs_diff(*new_weight)
+    }
+
+    fn create_new_voicing(&self, new_chord: &ChordName, new_voices: &[ChordVoice]) -> ChordVoicing {
+        println!("\n::new_chord: {}", new_chord);
+        println!(
+            "::new_voices: {} - {} - {}\n",
+            new_voices[0], new_voices[1], new_voices[2]
+        );
+
+        let mut note_weights = Vec::new();
+        let mut frequencies = Vec::new();
+
+        for voice in new_voices {
+            let note_oct = voice.note_oct();
+            note_weights.push(*music_theory_baux.get_note_weight(note_oct).unwrap());
+            frequencies.push(*music_theory_baux.get_freq(note_oct).unwrap());
+        }
+
+        let root = *new_voices
+            .iter()
+            .filter(|voice| voice.note_oct().note_name() == new_chord.get_root())
+            .collect::<Vec<_>>()[0]
+            .note_oct();
+
+        ChordVoicing {
+            chord_name: *new_chord,
+            root,
+            voices: (new_voices[0], new_voices[1], new_voices[2]),
+            note_weights,
+            transitions: None,
+            frequencies,
+        }
+    }
+
+    pub fn get_new_voice_choices(&self, new_spelling: &ChordSpelling) -> Vec<ChordVoice> {
+        new_spelling
+            .spelling()
+            .iter()
+            .flat_map(|chord_tone| {
+                (1..=8).map(move |oct| {
+                    let note_oct = NoteOct::from_note(chord_tone.note(), oct);
+                    ChordVoice::from_parts(&note_oct, chord_tone)
+                })
+            })
+            .collect()
+    }
+
+    fn calculate_best_choices(
+        &self,
+        new_chord_voices: &[ChordVoice],
+    ) -> HashMap<ChordVoice, BestChoices> {
+        let mut best_choices = HashMap::<ChordVoice, BestChoices>::new();
+
+        for &old_voice in &[self.voices.0, self.voices.1, self.voices.2] {
+            let old_weight = *music_theory_baux
+                .get_note_weight(old_voice.note_oct())
+                .unwrap();
+            let mut lo = (
+                VoiceLeadingChoice {
+                    diff: usize::MAX,
+                    voice: old_voice,
+                },
+                VoiceLeadingChoice {
+                    diff: usize::MAX,
+                    voice: old_voice,
+                },
+            );
+            let mut hi = (
+                VoiceLeadingChoice {
+                    diff: usize::MAX,
+                    voice: old_voice,
+                },
+                VoiceLeadingChoice {
+                    diff: usize::MAX,
+                    voice: old_voice,
+                },
+            );
+
+            for &new_voice in new_chord_voices {
+                let new_weight = *music_theory_baux
+                    .get_note_weight(new_voice.note_oct())
+                    .unwrap();
+                let diff = old_weight.abs_diff(new_weight);
+
+                if new_weight <= old_weight {
+                    if diff < lo.0.diff {
+                        lo.1 = lo.0.clone();
+                        lo.0 = VoiceLeadingChoice {
+                            diff,
+                            voice: new_voice,
+                        };
+                    } else if diff < lo.1.diff {
+                        lo.1 = VoiceLeadingChoice {
+                            diff,
+                            voice: new_voice,
+                        };
+                    }
+                } else if diff < hi.0.diff {
+                    hi.1 = hi.0.clone();
+                    hi.0 = VoiceLeadingChoice {
+                        diff,
+                        voice: new_voice,
+                    };
+                } else if diff < hi.1.diff {
+                    hi.1 = VoiceLeadingChoice {
+                        diff,
+                        voice: new_voice,
+                    };
+                }
+            }
+
+            best_choices.insert(old_voice, BestChoices { lo, hi });
+        }
+
+        best_choices
+    }
+
+    fn generate_leads(
+        &self,
+        best_choices: &HashMap<ChordVoice, BestChoices>,
+    ) -> Vec<VoiceLeadingConfig> {
+        let mut configurations = vec![VoiceLeadingConfig {
+            voices: Vec::new(),
+            diff: 0,
+        }];
+
+        for choices in best_choices.values() {
+            let new_choices = vec![&choices.lo.0, &choices.lo.1, &choices.hi.0, &choices.hi.1];
+
+            configurations = self.generate_configs(configurations, new_choices);
+        }
+
+        configurations
+    }
+
+    fn generate_configs(
+        &self,
+        current_configs: Vec<VoiceLeadingConfig>,
+        choices: Vec<&VoiceLeadingChoice>,
+    ) -> Vec<VoiceLeadingConfig> {
+        let mut new_configs = Vec::new();
+
+        for config in current_configs {
+            for choice in &choices {
+                let mut new_voices = config.voices.clone();
+
+                new_voices.push(choice.voice);
+                new_configs.push(VoiceLeadingConfig {
+                    voices: new_voices,
+                    // todo(?): sort out usize::MAX add'ing
+                    // diff: config.diff + choice.diff,
+                    diff: config.diff.saturating_add(choice.diff),
+                });
+            }
+        }
+
+        new_configs
+    }
+
+    fn has_duplicate_note(&self, config: &VoiceLeadingConfig) -> bool {
+        let mut note_set = HashSet::new();
+
+        for voice in &config.voices {
+            let note_name = voice.note_oct().note_name();
+            if note_set.contains(&note_name) {
+                return true;
+            }
+            note_set.insert(note_name);
+        }
+
+        false
     }
 }
+
+impl Default for ChordVoicing {
+    fn default() -> Self {
+        let voices = [NoteOct::C(3), NoteOct::E(3), NoteOct::G(3)];
+        let [root, third, fifth] = voices;
+        let mut note_weights = Vec::with_capacity(3);
+        let mut frequencies: Vec<f64> = Vec::with_capacity(3);
+        for voice in voices {
+            frequencies.push(*music_theory_baux.get_freq(&voice).unwrap());
+            note_weights.push(*music_theory_baux.get_note_weight(&voice).unwrap());
+        }
+
+        ChordVoicing {
+            chord_name: ChordName::C(ChordQuality::Maj),
+            root,
+            voices: (
+                ChordVoice::Root(root),
+                ChordVoice::Third(third),
+                ChordVoice::Fifth(fifth),
+            ),
+            frequencies,
+            note_weights,
+            transitions: None,
+        }
+    }
+}
+
+//
+//
+//
 
 pub fn from_input(
     name: &str,
@@ -132,7 +367,7 @@ pub fn from_input(
 
         let root_oct = match root_oct {
             Some(root_oct) => {
-                if root_oct < 1 || root_oct > 8 {
+                if !(1..=8).contains(&root_oct) {
                     return Err(ChordVoicingError::InvalidOct(root_oct, "root".to_string()));
                 }
                 root_oct
@@ -151,7 +386,7 @@ pub fn from_input(
 
         let voice_1_oct = match voice_1_oct {
             Some(voice_oct) => {
-                if voice_oct < 1 || voice_oct > 8 {
+                if !(1..=8).contains(&voice_oct) {
                     return Err(ChordVoicingError::InvalidOct(
                         voice_oct,
                         "voice 1".to_string(),
@@ -173,7 +408,7 @@ pub fn from_input(
 
         let voice_2_oct = match voice_2_oct {
             Some(voice_oct) => {
-                if voice_oct < 1 || voice_oct > 8 {
+                if !(1..=8).contains(&voice_oct) {
                     return Err(ChordVoicingError::InvalidOct(
                         voice_oct,
                         "voice 2".to_string(),

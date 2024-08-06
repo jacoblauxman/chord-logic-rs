@@ -1,10 +1,21 @@
-use crate::{ChordName, ChordSpelling, NoteName, NoteOct};
+use crate::{ChordName, ChordSpelling, NoteName, NoteOct, ScaleName, ScaleSpelling};
 use std::collections::HashMap;
 
 static NOTE_DATA: &str = include_str!(".././note_frequencies.txt");
 static CHORD_DATA: &str = include_str!(".././chord_spellings.txt");
+static SCALE_DATA: &str = include_str!(".././major_minor_scales.txt");
 
 // === NOTES/FREQUENCIES || NOTE WEIGHTS === //
+
+// todo(?): refactor to an encompassing 'type' (re: clippy)
+// #[derive(Debug, Clone)]
+// pub struct NoteFreqData {
+//     note_freqs: HashMap<NoteOct, f64>,
+//     freq_notes: HashMap<&'static str, NoteOct>,
+//     note_freq_collections: HashMap<NoteName, Vec<f64>>,
+//     note_weights: HashMap<NoteOct, usize>,
+//     weight_notes: HashMap<usize, NoteOct>,
+// }
 
 // `note_freqs`, `freq_notes`, `note_freq_collections`, and `note_weights` fields for `MusicTheoryBaux`
 fn generate_notes_freqs_data() -> (
@@ -14,6 +25,8 @@ fn generate_notes_freqs_data() -> (
     HashMap<NoteOct, usize>,
     HashMap<usize, NoteOct>,
 ) {
+    // todo(?): refactor to an encompassing 'type' (re: clippy)
+    // fn generate_notes_freqs_data() -> NoteFreqData {
     let mut note_freqs = HashMap::<NoteOct, f64>::new();
     let mut freq_notes = HashMap::<&'static str, NoteOct>::new();
     let mut note_freq_collections = HashMap::<NoteName, Vec<f64>>::from([
@@ -79,6 +92,13 @@ fn generate_notes_freqs_data() -> (
         }
     }
 
+    // NoteFreqData {
+    //     note_freqs,
+    //     freq_notes,
+    //     note_freq_collections,
+    //     note_weights,
+    //     weight_notes,
+    // }
     (
         note_freqs,
         freq_notes,
@@ -137,9 +157,6 @@ fn generate_chord_spellings() -> HashMap<ChordName, ChordSpelling> {
                 .split(", ")
                 .collect();
 
-            println!("current name: {:?}", name);
-            println!("current notes vec: {:?}", notes);
-
             let typed_name: ChordName = name.try_into().unwrap();
             let typed_notes: Vec<NoteName> =
                 notes.iter().map(|n| n.trim().try_into().unwrap()).collect();
@@ -171,11 +188,14 @@ pub fn generate_music_data() -> (
     HashMap<usize, NoteOct>,
     HashMap<ChordName, ChordSpelling>,
     HashMap<NoteName, NoteName>,
+    HashMap<NoteName, NoteName>,
 ) {
     let (note_freqs, freq_notes, note_freq_collections, note_weights, weight_notes) =
         generate_notes_freqs_data();
     let chord_spellings = generate_chord_spellings();
     let enharmonics = generate_enharmonics();
+
+    let scale_relatives = generate_relative_keys();
 
     (
         note_freqs,
@@ -185,5 +205,51 @@ pub fn generate_music_data() -> (
         weight_notes,
         chord_spellings,
         enharmonics,
+        scale_relatives,
     )
+}
+
+//
+//
+//
+
+// === SCALE SPELLING === //
+fn _generate_scale_spellings() -> HashMap<ScaleName, ScaleSpelling> {
+    todo!();
+    // let mut scale_spellings: HashMap<ScaleName, ScaleSpelling> = HashMap::new();
+
+    // for line in SCALE_DATA.lines() {}
+}
+
+// === RELATIVE KEYS (MAJOR-MINOR) === //
+
+// Note: "major -> minor" scale root note kv's
+fn generate_relative_keys() -> HashMap<NoteName, NoteName> {
+    [
+        ("C", "A"),
+        ("C#", "A#"),
+        ("D", "B"),
+        ("D#", "Eb"),
+        ("E", "C#"),
+        ("F", "D"),
+        ("F#", "Gb"),
+        ("G", "E"),
+        ("G#", "Ab"),
+        ("A", "F#"),
+        ("Bb", "G"),
+        ("B", "G#"),
+    ]
+    .into_iter()
+    .map(|(maj, min)| {
+        let maj = NoteName::try_from(maj)
+            .expect("should convert relative maj-min note string values successfully");
+        let min = NoteName::try_from(min)
+            .expect("should convert relative maj-min note string values successfully");
+
+        (maj, min)
+    })
+    .fold(HashMap::new(), |mut acc, (maj, min)| {
+        acc.insert(maj, min);
+        acc
+    })
 }

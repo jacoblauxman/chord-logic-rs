@@ -342,7 +342,7 @@ impl TryFrom<&str> for ChordName {
             "Bsus4" | "Bsus" | "Bs4" => Ok(ChordName::B(ChordQuality::Sus4)),
             "Bmaj7" | "BM7" | "B^7" => Ok(ChordName::B(ChordQuality::MajSev)),
             "Bmin7" | "Bm7" | "B-7" => Ok(ChordName::B(ChordQuality::MinSev)),
-            "B7" | "Bdom7" => Ok(ChordName::A(ChordQuality::Sev)),
+            "B7" | "Bdom7" => Ok(ChordName::B(ChordQuality::Sev)),
             "B7sus4" | "B7s4" | "B7s11" | "B11" | "Bsus11" => {
                 Ok(ChordName::B(ChordQuality::SevSus))
             }
@@ -416,8 +416,9 @@ pub struct ChordSpelling {
 }
 
 impl ChordSpelling {
-    pub fn new(root: &NoteName, quality: &ChordQuality, notes: &Vec<NoteName>) -> Self {
-        let name = create_chord_name(&root, &quality);
+    // pub fn new(root: &NoteName, quality: &ChordQuality, notes: &Vec<NoteName>) -> Self {
+    pub fn new(root: &NoteName, quality: &ChordQuality, notes: &[NoteName]) -> Self {
+        let name = create_chord_name(root, quality);
 
         let mut spelling = Vec::with_capacity(3);
         spelling.push(ChordTone::Root(*root));
@@ -432,15 +433,15 @@ impl ChordSpelling {
                 spelling.push(ChordTone::Fifth(notes[2]));
             }
             ChordQuality::Sus4 => {
-                spelling.push(ChordTone::Fourth(notes[2]));
+                spelling.push(ChordTone::Fourth(notes[1]));
                 spelling.push(ChordTone::Fifth(notes[2]));
             }
             ChordQuality::MajSev | ChordQuality::MinSev | ChordQuality::Sev => {
-                spelling.push(ChordTone::Third(notes[2]));
+                spelling.push(ChordTone::Third(notes[1]));
                 spelling.push(ChordTone::Seventh(notes[2]));
             }
             ChordQuality::SevSus => {
-                spelling.push(ChordTone::Fourth(notes[2]));
+                spelling.push(ChordTone::Fourth(notes[1]));
                 spelling.push(ChordTone::Seventh(notes[2]));
             }
         }

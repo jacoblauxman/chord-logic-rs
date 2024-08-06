@@ -23,6 +23,7 @@ impl MusicTheoryBaux {
             weight_notes,
             chord_spellings,
             enharmonics,
+            _scale_relatives,
         ) = generate_music_data();
 
         Self {
@@ -101,6 +102,12 @@ impl MusicTheoryBaux {
 
     pub fn get_enharmonic(&self, note: &NoteName) -> Option<&NoteName> {
         self.enharmonics.get(note)
+    }
+}
+
+impl Default for MusicTheoryBaux {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

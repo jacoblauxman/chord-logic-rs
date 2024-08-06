@@ -98,6 +98,23 @@ impl NoteOct {
             NoteName::B => NoteOct::B(oct),
         }
     }
+
+    pub fn note_name(&self) -> NoteName {
+        match self {
+            NoteOct::C(_) => NoteName::C,
+            NoteOct::CSharpDFlat(_) => NoteName::CSharpDFlat,
+            NoteOct::D(_) => NoteName::D,
+            NoteOct::DSharpEFlat(_) => NoteName::DSharpEFlat,
+            NoteOct::E(_) => NoteName::E,
+            NoteOct::F(_) => NoteName::F,
+            NoteOct::FSharpGFlat(_) => NoteName::FSharpGFlat,
+            NoteOct::G(_) => NoteName::G,
+            NoteOct::GSharpAFlat(_) => NoteName::GSharpAFlat,
+            NoteOct::A(_) => NoteName::A,
+            NoteOct::ASharpBFlat(_) => NoteName::ASharpBFlat,
+            NoteOct::B(_) => NoteName::B,
+        }
+    }
 }
 
 impl Display for NoteOct {
